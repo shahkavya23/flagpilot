@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useFlags } from '@flagsmith/flagsmith/react'
+import { useEffect, useState } from 'react'
+import { useFlags, useFlagsmith } from '@flagsmith/flagsmith/react'
 import './App.css'
 
 const examples = [
@@ -21,8 +21,10 @@ const examples = [
 ]
 
 function App() {
-  const flags = useFlags(['ai_release_planner'])
+  const flags = useFlags(['ai_release_planner', 'live_demo_button'])
+  const flagsmith = useFlagsmith()
   const plannerEnabled = flags.ai_release_planner?.enabled
+  const liveDemoEnabled = flags.live_demo_button?.enabled
   const [featureRequest, setFeatureRequest] = useState('')
   const [successMetric, setSuccessMetric] = useState('')
   const [plan, setPlan] = useState(null)
@@ -31,6 +33,14 @@ function App() {
   const [approvalMessage, setApprovalMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [demoRuns, setDemoRuns] = useState(0)
+
+  useEffect(() => {
+    const refreshFlags = window.setInterval(() => {
+      flagsmith.getFlags().catch(() => {})
+    }, 4000)
+    return () => window.clearInterval(refreshFlags)
+  }, [flagsmith])
 
   function applyExample(example) {
     setFeatureRequest(example.feature)
@@ -237,6 +247,37 @@ function App() {
                   </div>
                 )}
               </article>
+            </div>
+          </section>
+        )}
+
+        {liveDemoEnabled && (
+          <section className="live-demo">
+            <div className="live-demo-copy">
+              <p className="eyebrow"><span>03</span> Live feature flag</p>
+              <h2>Flip the switch.<br /><em>Watch it respond.</em></h2>
+              <p>
+                This entire demo exists only while <code>live_demo_button</code> is on.
+                Toggle it in Flagsmith and the experience appears or disappears live.
+              </p>
+              <div className="live-proof"><span /> Checking Flagsmith every 4 seconds</div>
+            </div>
+
+            <div className="demo-console">
+              <div className="demo-console-top">
+                <span>Presentation mode</span>
+                <span className="live-badge"><i /> Flag ON</span>
+              </div>
+              <div className="demo-stage">
+                <div className={`demo-orbit ${demoRuns ? 'is-active' : ''}`}>
+                  <span>{String(demoRuns).padStart(2, '0')}</span>
+                </div>
+                <p>{demoRuns ? 'Feature action completed safely.' : 'Your live feature is ready.'}</p>
+                <small>Controlled remotely by Flagsmith—no redeploy required.</small>
+              </div>
+              <button type="button" className="demo-button" onClick={() => setDemoRuns((runs) => runs + 1)}>
+                <span>{demoRuns ? 'Run feature again' : 'Try the live feature'}</span><b>↗</b>
+              </button>
             </div>
           </section>
         )}

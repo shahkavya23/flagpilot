@@ -12,6 +12,7 @@ createRoot(document.getElementById('root')).render(
       options={{
         environmentID: import.meta.env.VITE_FLAGSMITH_ENVIRONMENT_ID,
         enableAnalytics: true,
+        realtime: true,
       }}
     >
       <App />
