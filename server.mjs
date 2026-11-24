@@ -1,11 +1,12 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import { GoogleGenAI } from '@google/genai'
+import path from 'node:path'
 
 dotenv.config({ path: '.env.server.local' })
 
 const app = express()
-const port = 3001
+const port = process.env.PORT || 3001
 const flagsmithApiUrl = 'https://api.flagsmith.com/api/v1'
 
 app.use(express.json({ limit: '20kb' }))
@@ -144,6 +145,14 @@ app.post('/api/approve', async (request, response) => {
       error: `Flagsmith could not create the flag: ${error.message}`,
     })
   }
+})
+
+app.use(express.static('dist'))
+app.use((request, response, next) => {
+  if (request.method !== 'GET' || request.path.startsWith('/api/')) {
+    return next()
+  }
+  return response.sendFile(path.resolve('dist/index.html'))
 })
 
 app.listen(port, () => {
